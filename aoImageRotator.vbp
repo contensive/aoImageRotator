@@ -1,8 +1,8 @@
 Type=OleDll
+Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\..\..\..\Windows\system32\stdole2.tlb#OLE Automation
 Class=ImageClass; ImageClass.cls
-Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\WINDOWS\system32\stdole2.tlb#OLE Automation
-Module=ccCommonModule; ..\..\Release\ccCommonModule.bas
-Module=kmaCommonModule; ..\..\Release\kmaCommonModule.bas
+Module=ccCommonModule; ..\Release\ccCommonModule.bas
+Module=kmaCommonModule; ..\Release\kmaCommonModule.bas
 Startup="(None)"
 HelpFile=""
 ExeName32="aoImageRotator.dll"

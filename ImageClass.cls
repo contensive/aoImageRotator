@@ -18,6 +18,7 @@ Private timeBetweenFrames As Double
 
 Private lstImage As String
 Private lstLink As String
+Private lstTarget As String
 
 Private rotSerial As Double
 
@@ -78,7 +79,7 @@ Public Function GetContent(OptionString As String) As String
         CS = Main.OpenCSContent("Image Grouping Rules", "ImageGroupingID=" & GroupingID, "", , , , "ID")
         If Main.CSOK(CS) Then
             Stream = GetScripts()
-            Stream = Stream & "<a id=""link_" & rotSerial & """ href=""" & lstLink & """>"
+            Stream = Stream & "<a target=""" & lstTarget & """ id=""link_" & rotSerial & """ href=""" & lstLink & """>"
             Stream = Stream & "<img border=""0"" id=""anim_" & rotSerial & """ src=""" & lstImage & """ "
             If imgWidth <> 0 Then
                 Stream = Stream & "width=""" & imgWidth & """ "
@@ -106,9 +107,10 @@ Private Function GetScripts() As String
     Dim SQL As String
     Dim ImageString As String
     Dim Filename As String
-    Dim link As String
+    Dim Link As String
+    Dim target As String
     
-    SQL = "SELECT I.ImageFilename, I.link"
+    SQL = "SELECT I.ImageFilename, I.link, I.NewWindow"
     SQL = SQL & " FROM ImageGroupingRules R, ccImages I"
     SQL = SQL & " Where (R.ImageID = I.Id)"
     SQL = SQL & " and (R.ImageGroupingID=" & GroupingID & ")"
@@ -124,19 +126,33 @@ Private Function GetScripts() As String
         retVal = retVal & "     var imageCount_" & rotSerial & " = " & numCSRows + 1 & ";" & vbCrLf
         retVal = retVal & "     var RotImages_" & rotSerial & " = new Array(" & numCSRows & ");" & vbCrLf
         retVal = retVal & "     var linkRotation_" & rotSerial & " = new Array(" & numCSRows & ");" & vbCrLf
+        retVal = retVal & "     var linkWindow_" & rotSerial & " = new Array(" & numCSRows & ");" & vbCrLf
 
         For Index = 0 To numCSRows
-            link = kmaEncodeText(CSRows(1, Index))
-            If link = "" Then
-                link = "#"
+            Link = kmaEncodeText(CSRows(1, Index))
+            '
+            If Link = "" Then
+                Link = "#"
             End If
-            Filename = Main.ServerProtocol & Main.ServerHost & Main.ServerFilePath & CSRows(0, Index)
+            '
+            Filename = Main.ServerProtocol & Main.ServerHost & Main.serverFilePath & CSRows(0, Index)
             Filename = kmaEncodeJavascript(Filename)
+            '
             retVal = retVal & "     RotImages_" & rotSerial & "[" & Index & "] = '" & Filename & "';" & vbCrLf
-            retVal = retVal & "     linkRotation_" & rotSerial & "[" & Index & "] = '" & link & "';" & vbCrLf
+            retVal = retVal & "     linkRotation_" & rotSerial & "[" & Index & "] = '" & Link & "';" & vbCrLf
+            '
+            If CSRows(2, Index) Then
+                retVal = retVal & "     linkWindow_" & rotSerial & "[" & Index & "] = '_blank';" & vbCrLf
+                target = "_blank"
+            Else
+                retVal = retVal & "     linkWindow_" & rotSerial & "[" & Index & "] = '_self';" & vbCrLf
+                target = "_self"
+            End If
+            '
             If Index = numCSRows Then
                 lstImage = Filename
-                lstLink = link
+                lstLink = Link
+                lstTarget = target
             End If
         Next
 
@@ -147,12 +163,16 @@ Private Function GetScripts() As String
         retVal = retVal & "function rotateImages_" & rotSerial & "() {" & vbCrLf
         retVal = retVal & "     document.images[""anim_" & rotSerial & """].src = RotImages_" & rotSerial & "[imageIndex_" & rotSerial & "];" & vbCrLf
         retVal = retVal & "     document.getElementById(""link_" & rotSerial & """).href = linkRotation_" & rotSerial & "[imageIndex_" & rotSerial & "];" & vbCrLf
+        retVal = retVal & "     document.getElementById(""link_" & rotSerial & """).setAttribute('target', linkWindow_" & rotSerial & "[imageIndex_" & rotSerial & "]);" & vbCrLf
+        '
         retVal = retVal & "     imageIndex_" & rotSerial & "++;" & vbCrLf
         retVal = retVal & "     if (imageIndex_" & rotSerial & " == imageCount_" & rotSerial & ") {" & vbCrLf
         retVal = retVal & "         imageIndex_" & rotSerial & " = 0;" & vbCrLf
         retVal = retVal & "     }" & vbCrLf
         retVal = retVal & "     self.setTimeout(""rotateImages_" & rotSerial & "()"", " & timeBetweenFrames & ");" & vbCrLf
         retVal = retVal & "}" & vbCrLf
+        
+        retVal = retVal & "rotateImages_" & rotSerial & "();" & vbCrLf
         
         retVal = retVal & "</script>" & vbCrLf
         
